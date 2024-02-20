@@ -1,0 +1,227 @@
+<html>
+
+</style>
+<head>
+  <title>thermometer lab</title
+</head>
+
+<body>
+  
+  <h1 style="color:#ff90c4;">thermometer lab</h1>
+  <div>
+    <svg version="1.1" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" height="50%" width="77.5%">
+      <style>
+        #glass {
+          fill: #ffffff;
+          stroke: #ff90c4;
+          stroke-width: 3;
+        }
+
+        #container {
+          fill: #ffffff;
+          stroke: #ff90c4;
+          stroke-width: 5;
+        }
+        
+
+        #highlight {
+          fill-opacity:0;
+          stroke:#ffffff;
+          stroke-width:2.5;
+        }
+        
+        #slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 25px;
+          height: 25px;
+          background: #ff90c4;
+          cursor: pointer;
+        }
+        
+        #ticks {
+          stroke: #e04990;
+          stroke-width: 3;
+        }
+
+        #fahrenheit {
+          fill: #e04990;
+        }
+        
+        #celcius {
+          fill: #e04990;
+        }
+
+        #liquid {
+          fill: #33CAFF; 
+        }
+
+        
+  
+      </style>
+
+      <rect id="container" x="10" y="10" width="200" height="210" rx="15" />
+
+      <g id="glass">
+        <rect x="45" y="20" width="30" height="160" rx="15" />
+        <ellipse cx="60" cy="180" rx="30" ry="30" />
+        <rect x="46.5" y="22" width="27" height="165" rx="15" stroke="none" />
+      </g>
+
+      <g id="liquid">
+        <rect x="50" y="25" width="20" height="0" rx="15" id="therm-height"/>
+        <ellipse cx="60" cy="180" rx="25" ry="25" />
+      </g>
+
+      <g id="highlight">
+        <path d=" M 49 163 A 20 20 236 0 1 66 161" />
+        <path d=" M 69 198 A 20 20 64 0 1 46 166" />
+      </g>
+
+      <g id="ticks">
+        <line x1="77.5" y1="25" x2="100" y2="25" />
+        <line x1="77.5" y1="40" x2="88.75" y2="40"  />
+        <line x1="77.5" y1="55" x2="100" y2="55"  />
+        <line x1="77.5" y1="70" x2="88.75" y2="70"  />
+        <line x1="77.5" y1="85" x2="100" y2="85" />
+        <line x1="77.5" y1="100" x2="88.75" y2="100" />
+        <line x1="77.5" y1="115" x2="100" y2="115"  />
+        <line x1="77.5" y1="130" x2="88.75" y2="130" />
+        <line x1="77.5" y1="145" x2="100" y2="145" />
+    
+      </g>
+
+      <g id="fahrenheit">
+        <text x="102.5" y="150">42.4&deg;F</text>
+        <text x="102.5" y="120">84.8&deg;F</text>
+        <text x="102.5" y="90" >127.2&deg;F</text>
+        <text x="102.5" y="60">169.6&deg;F</text>
+        <text x="102.5" y="30" >212&deg;F</text>
+      </g>
+
+      <g id="celcius">
+        <text x="102.5" y="150" >5.6&deg;C</text>
+        <text x="102.5" y="120" >29.2&deg;C</text>
+        <text x="102.5" y="90" >52.8&deg;C</text>
+        <text x="102.5" y="60">76.4&deg;C</text>
+        <text x="102.5" y="30">100&deg;C</text>
+      </g>
+    </svg>
+  </div>
+        <input id="slider" type="range" min="1" max="100" value="0">  
+  </div>
+  <p style="color:#ff90c4;"><b>please choose a temperature scale and click submit!</b></p>
+  <form>
+
+    <input type="radio" name="temp" id="F_check" value="Fa" >fahrenheit<br>
+     
+    <input type="radio" name="temp" id="C_check" value="Ce" >celcius<br>
+ 
+    <button type="button" onclick="display()">
+        Submit
+    </button>
+</form>
+  
+<script>
+  /* [
+Copyright © 2020 Xah Lee
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+URL: SVG Circle Arc http://xahlee.info/js/svg_circle_arc.html
+Version 2019-06-19
+
+] */
+
+const cos = Math.cos;
+const sin = Math.sin;
+const π = Math.PI;
+
+const f_matrix_times = (( [[a,b], [c,d]], [x,y]) => [ a * x + b * y, c * x + d * y]);
+const f_rotate_matrix = (x => [[cos(x),-sin(x)], [sin(x), cos(x)]]);
+const f_vec_add = (([a1, a2], [b1, b2]) => [a1 + b1, a2 + b2]);
+
+const f_svg_ellipse_arc = (([cx,cy],[rx,ry], [t1, Δ], φ ) => {
+/* [
+returns a SVG path element that represent a ellipse.
+cx,cy → center of ellipse
+rx,ry → major minor radius
+t1 → start angle, in radian.
+Δ → angle to sweep, in radian. positive.
+φ → rotation on the whole, in radian
+URL: SVG Circle Arc http://xahlee.info/js/svg_circle_arc.html
+Version 2019-06-19
+ ] */
+Δ = Δ % (2*π);
+const rotMatrix = f_rotate_matrix (φ);
+const [sX, sY] = ( f_vec_add ( f_matrix_times ( rotMatrix, [rx * cos(t1), ry * sin(t1)] ), [cx,cy] ) );
+const [eX, eY] = ( f_vec_add ( f_matrix_times ( rotMatrix, [rx * cos(t1+Δ), ry * sin(t1+Δ)] ), [cx,cy] ) );
+const fA = ( (  Δ > π ) ? 1 : 0 );
+const fS = ( (  Δ > 0 ) ? 1 : 0 );
+const path_2wk2r = document.createElementNS("http://www.w3.org/2000/svg", "path");
+path_2wk2r.setAttribute("d", "M " + sX + " " + sY + " A " + [ rx , ry , φ / (2*π) *360, fA, fS, eX, eY ].join(" "));
+return path_2wk2r;
+});
+</script>
+<script>
+
+  var slider = document.getElementById("slider");
+  var therm_height = document.getElementById("therm-height");
+  var liquid = document.getElementById("liquid");
+  var fah = document.getElementById("fahrenheit");
+  var cel = document.getElementById("celcius");
+  var F_check = document.getElementById("F_check"); 
+  var C_check = document.getElementById("C_check");
+  fah.style.display = "none";
+  cel.style.display = "none";
+  function display() { 
+    if(document.getElementById('F_check').checked) {
+      fah.setAttribute("fill", "black"); 
+      cel.setAttribute("fill", "white");
+      cel.style.display = "none";
+      fah.style.display = "block";
+    }
+    else if(document.getElementById('C_check').checked) {
+      fah.setAttribute("fill", "white"); 
+      cel.setAttribute("fill", "black"); 
+      fah.style.display = "none";
+      cel.style.display = "block";
+    }
+    else {
+      fah.style.display = "none";
+      cel.style.display = "none";
+    }
+  }
+  // Update the current slider value (each time you drag the slider handle)
+  slider.oninput = function() {
+    var newValue = (100-parseInt(this.value))*1.35;
+    therm_height.setAttribute("height", 160-parseInt(newValue));
+    therm_height.setAttribute("y", parseInt(newValue)+25);
+
+    if ((this.value >= 0) && (this.value < 10)) {
+      liquid.setAttribute("style", "fill:#33CAFF;");
+    }
+    else if ((this.value >= 10) && (this.value < 50)) {
+      liquid.setAttribute("style", "fill:#FFB533");
+    }
+    else if((this.value >= 50) && (this.value <=100)) {
+      liquid.setAttribute("style", "fill:#FF5533");
+    }
+    console.log(this.value)
+  }
+
+
+  
+  
+  
+      
+
+
+</script>
+</body>
+
+</html>
